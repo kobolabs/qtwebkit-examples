@@ -41,6 +41,8 @@
 #include <QtWidgets>
 #include <QtNetwork>
 #include <QtWebKitWidgets>
+#include <QDebug>
+#include <QVBoxLayout>
 #include "mainwindow.h"
 
 //! [1]
@@ -84,6 +86,10 @@ MainWindow::MainWindow(const QUrl& url)
     connect(viewSourceAction, SIGNAL(triggered()), SLOT(viewSource()));
     viewMenu->addAction(viewSourceAction);
 
+    QAction* viewElementAction = new QAction("Element Geometry", this);
+    connect(viewElementAction, SIGNAL(triggered()), SLOT(viewElement()));
+    viewMenu->addAction(viewElementAction);
+
 //! [3]
     QMenu *effectMenu = menuBar()->addMenu(tr("&Effect"));
     effectMenu->addAction("Highlight all links", this, SLOT(highlightAllLinks()));
@@ -124,6 +130,55 @@ void MainWindow::slotSourceDownloaded()
     reply->deleteLater();
 }
 
+ElementViewer::ElementViewer(MainWindow *window)
+  : m_mainWindow(window)
+{
+    QDialog dialog;
+
+    QVBoxLayout* layout = new QVBoxLayout();
+
+    QLabel* label = new QLabel();
+    label->setText("Write selector here:");
+    layout->addWidget(label);
+    m_selectorEdit = new QLineEdit();
+    layout->addWidget(m_selectorEdit);
+
+    QPushButton* show = new QPushButton("Show Geometry");
+    QObject::connect(show, SIGNAL(clicked()), this, SLOT(search()));
+    layout->addWidget(show);
+
+    label = new QLabel();
+    label->setText("Geometry of first element:");
+    layout->addWidget(label);
+
+    m_resultEdit = new QTextEdit();
+    m_resultEdit->setReadOnly(true);
+    layout->addWidget(m_resultEdit);
+
+    dialog.setLayout(layout);
+    dialog.exec();
+}
+
+void ElementViewer::search()
+{
+    QWebElement a = m_mainWindow->getView()->page()->mainFrame()->findFirstElement(m_selectorEdit->text());
+
+    QString result;
+    if (a.isNull()) {
+        result = "missing element";
+    } else {
+        QRect geo = a.geometry();
+        QTextStream(&result) << "x: " << geo.x() << " y: " << geo.y() << " width: " << geo.width() << " height: " << geo.height();
+    }
+    m_resultEdit->setAttribute(Qt::WA_DeleteOnClose);
+    m_resultEdit->setPlainText(result);
+}
+
+void MainWindow::viewElement()
+{
+    ElementViewer viewer(this);
+}
+
 //! [4]
 void MainWindow::adjustLocation()
 {
@@ -142,9 +197,9 @@ void MainWindow::changeLocation()
 void MainWindow::adjustTitle()
 {
     if (progress <= 0 || progress >= 100)
-        setWindowTitle(view->title());
+        setWindowTitle(QString("%1 [%2]").arg(view->title()).arg(qWebKitEngineVersion()));
     else
-        setWindowTitle(QString("%1 (%2%)").arg(view->title()).arg(progress));
+        setWindowTitle(QString("%1 (%2%) [%3]").arg(view->title()).arg(progress).arg(qWebKitEngineVersion()));
 }
 
 void MainWindow::setProgress(int p)

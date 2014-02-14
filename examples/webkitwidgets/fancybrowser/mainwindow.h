@@ -52,6 +52,7 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(const QUrl& url);
+    QWebView* getView() { return view; }
 
 protected slots:
 
@@ -63,6 +64,7 @@ protected slots:
 
     void viewSource();
     void slotSourceDownloaded();
+    void viewElement();
 
     void highlightAllLinks();
     void rotateImages(bool invert);
@@ -78,4 +80,16 @@ private:
     QAction *rotateAction;
     int progress;
 //! [1]
+};
+
+class ElementViewer : public QObject {
+    Q_OBJECT
+public:
+    ElementViewer(MainWindow *window);
+public slots:
+    void search();
+private:
+    QLineEdit* m_selectorEdit;
+    QTextEdit* m_resultEdit;
+    MainWindow* m_mainWindow;
 };

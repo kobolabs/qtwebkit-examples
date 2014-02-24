@@ -63,6 +63,14 @@ MainWindow::MainWindow(const QUrl& url)
 
 //! [2]
     view = new QWebView(this);
+    QString serif = "A-OTF Ryumin Pr6N";
+    QString sans = "A-OTF Gothic MB101 Pr6N";
+    view->settings()->setFontFamily(QWebSettings::StandardFont, serif);
+    view->settings()->setFontFamily(QWebSettings::FixedFont, sans);
+    view->settings()->setFontFamily(QWebSettings::SerifFont, serif);
+    view->settings()->setFontFamily(QWebSettings::SansSerifFont, sans);
+    view->settings()->setFontFamily(QWebSettings::CursiveFont, serif);
+    view->settings()->setFontFamily(QWebSettings::FantasyFont, serif);
     view->load(url);
     connect(view, SIGNAL(loadFinished(bool)), SLOT(adjustLocation()));
     connect(view, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
